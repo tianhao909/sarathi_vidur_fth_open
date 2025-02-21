@@ -141,6 +141,31 @@ def main():
     args = parse_args()
     yaml.dump(vars(args), open(f"{args.output_dir}/config.yaml", "w"))
     # print(f'>>fth test arg={args}')
+    
+    # fth 初始化 Ray
+    # if not args.disable_ray:
+    #     ray.init(num_gpus=args.num_gpus,_temp_dir="/mnt/fth/software5/ray_tmp_fth/tmp")
+    # if not args.disable_ray:
+    #     ray.init(_temp_dir="/mnt/fth/software5/ray_tmp_fth/tmp")
+
+
+    # 确保临时目录存在且有权限
+    temp_dir = "/mnt/fth/software5/ray_tmp_fth/tmp"
+    os.makedirs(temp_dir, exist_ok=True)
+    os.chmod(temp_dir, 0o777)
+
+    # if not args.disable_ray:
+    #     try:
+    #         # 尝试连接到现有的 Ray 集群
+    #         ray.init(_temp_dir=temp_dir)
+    #     except ConnectionError:
+    #         # 如果没有现有集群，则启动一个新的头节点
+    #         print("No existing Ray cluster found. Starting a new head node...")
+    #         os.system(f"ray start --head --num-gpus={args.num_gpus} --temp-dir={temp_dir}")
+    #         ray.init(_temp_dir=temp_dir)
+    # else:
+    #     print("Ray is disabled. Running without Ray.")
+
 
     num_tokens_to_profile = get_num_tokens_to_profile(args.max_tokens)
 
@@ -149,6 +174,29 @@ def main():
         num_tokens_to_profile,
         args.num_tensor_parallel_workers,
     )
+
+
+    # # fth 使用 itertools.tee 创建两个独立的迭代器
+    # total_combos_copy, total_combos = itertools.tee(total_combos)
+
+    # # fth 遍历复制的迭代器
+    # for combo in total_combos_copy:
+    #     print(combo)
+
+    # # 现在 total_combos 仍然可以用于其他操作
+    # count = 0
+    # for combo in total_combos_copy:
+    #     print(f">>fth combo{combo}")
+    #     count += 1
+
+    # print(f"Total number of combinations: {count}")
+    
+    # print(f">>fth test Total combos: {len(list(total_combos))} total_combos={total_combos}")
+    # total_combos_list = list(total_combos) # fth 转换为列表并打印
+    # print(f">>fth test  啥也没有啊  total_combos_list={total_combos_list}")
+
+    # for combo in total_combos_list:
+    #     print(f">>fth test this combo={combo}")
 
     pbar = tqdm(total=len(list(total_combos)))
 

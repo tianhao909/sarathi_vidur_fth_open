@@ -1,9 +1,9 @@
 disable_ray: true
-max_tokens: 256
+max_tokens: 1
 models:
 - meta-llama/Llama-2-7b-hf
-num_gpus: 2
+num_gpus: 1
 num_tensor_parallel_workers:
-- 2
-output_dir: vidur/profiling/fth_profiling_outputs/mlp/2025-02-21_10-53-09
+- 1
+output_dir: vidur/profiling/fth_profiling_outputs/mlp/2025-02-21_15-53-02
 profile_method: record_function

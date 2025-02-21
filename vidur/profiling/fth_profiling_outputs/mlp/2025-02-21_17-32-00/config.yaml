@@ -1,0 +1,12 @@
+disable_ray: false
+max_tokens: 4096
+models:
+- codellama/CodeLlama-34b-Instruct-hf
+num_gpus: 4
+num_tensor_parallel_workers:
+- 1
+- 2
+- 4
+- 8
+output_dir: vidur/profiling/fth_profiling_outputs/mlp/2025-02-21_17-32-00
+profile_method: record_function

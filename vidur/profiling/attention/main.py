@@ -179,6 +179,11 @@ def profile_model(
 def main():
     args = parse_args()
 
+    # fth 初始化 Ray
+    if not args.disable_ray:
+        ray.init(num_gpus=args.num_gpus,_temp_dir="/mnt/fth/software5/ray_tmp_fth/tmp")
+
+
     dtype = torch.float16
     input_combinations = get_attention_input_combinations(
         args.max_seq_len,
