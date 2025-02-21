@@ -158,7 +158,14 @@ def profile_model(  # 定义profile_model函数，用于分析给定模型
     return df  # 返回结果DataFrame
 
 def main():  # 定义main函数，程序的主入口
+    # 作用：调用 parse_args() 函数来解析传递给脚本的命令行参数，并将结果存储在 args 变量中。
     args = parse_args()  # 解析命令行参数 # /disk1/futianhao/software1/vidur/data/model_configs/meta-llama/Llama-2-70b-hf.yml
+    # print(f'>>fth test arg={arg}')
+    # >>fth test arg=Namespace(disable_ray=True, num_gpus=2, output_dir='profiling_outputs/mlp/2025-02-21_10-49-55', models=['meta-llama/Llama-2-7b-hf'], num_tensor_parallel_workers=[2], max_tokens=256, profile_method='record_function')
+    
+    # vars(args)：将 args 对象转换为字典形式，便于序列化。
+    # open(f"{args.output_dir}/config.yaml", "w")：在指定的输出目录 (args.output_dir) 下创建或覆盖一个名为 config.yaml 的文件，准备写入。
+    # yaml.dump(...)：将字典形式的参数写入到 config.yaml 文件中，使用 YAML 格式
     yaml.dump(vars(args), open(f"{args.output_dir}/config.yaml", "w"))  # 将参数保存到YAML文件
 
     num_tokens_to_profile = get_num_tokens_to_profile(args.max_tokens)  # 获取分析的token数量

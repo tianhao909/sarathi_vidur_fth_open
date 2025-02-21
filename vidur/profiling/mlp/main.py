@@ -140,6 +140,7 @@ def profile_model(
 def main():
     args = parse_args()
     yaml.dump(vars(args), open(f"{args.output_dir}/config.yaml", "w"))
+    # print(f'>>fth test arg={args}')
 
     num_tokens_to_profile = get_num_tokens_to_profile(args.max_tokens)
 
