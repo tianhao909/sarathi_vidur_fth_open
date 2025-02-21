@@ -177,8 +177,8 @@ def main():
     args = parse_args()  # 解析命令行参数
 
     # 如果没有禁用 Ray，则初始化 Ray
-    if not args.disable_ray:
-        ray.init(num_gpus=args.num_gpus,_temp_dir="/mnt/fth/software5/ray_tmp_fth/tmp")  # 初始化 Ray，指定 GPU 数量和临时目录
+    # if not args.disable_ray:
+    #     ray.init(num_gpus=args.num_gpus,_temp_dir="/mnt/fth/software5/ray_tmp_fth/tmp")  # 初始化 Ray，指定 GPU 数量和临时目录
 
     dtype = torch.float16  # 设置数据类型为 float16
     input_combinations = get_attention_input_combinations(
