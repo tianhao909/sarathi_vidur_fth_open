@@ -81,6 +81,7 @@ def parse_args():
 def profile_model(
     args: argparse.Namespace, model: str, num_tokens_to_profile: List[int], pbar: Any
 ):
+    # print(">> fth 调用我啦 /mnt/fth/software5/vidur/vidur/profiling/mlp/main.py")
     model_config = ModelConfig.from_model_name(model)
 
     promises = []
