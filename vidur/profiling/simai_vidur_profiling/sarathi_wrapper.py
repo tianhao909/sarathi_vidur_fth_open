@@ -144,20 +144,38 @@ class SarathiWrapper:
         )
         
 
+
+    # mlp profile
     @torch.inference_mode()  # 使用推理模式上下文管理器，禁用梯度计算以提高性能
-    def profile(self, num_tokens: int):  # 定义性能分析方法，接收token数量作为参数
-        vocab_range = self.model_config.vocab_size // self.num_tensor_parallel_workers  # 计算每个张量并行工作线程的词汇表范围
-        input_ids = torch.randint(  # 生成随机输入token ID
+    # def profile(self, num_tokens: int):  # 定义性能分析方法，接收token数量作为参数
+    # fth mlp+att
+    def profile(
+        self, 
+        num_tokens: int, 
+        attention_input: AttentionInput,  # 注意力输入对象
+    ):  # 定义性能分析方法，接收token数量作为参数
+        
+        assert attention_input.is_valid(self._max_model_len)  # fth att 确保输入有效
+
+        # mlp === 共享部分：生成输入数据 ===
+        vocab_range = self.model_config.vocab_size // self.num_tensor_parallel_workers  # mlp 计算每个张量并行工作线程的词汇表范围
+        input_ids = torch.randint(  # mlp生成随机输入token ID
             low=0,  # 最小值为0
             high=vocab_range,  # 最大值为词汇表范围
             size=(num_tokens,),  # 生成的token数量
             device="cuda",  # 在CUDA设备上生成
             dtype=torch.long,  # 数据类型为long
         )
-        positions = torch.arange(num_tokens, device="cuda", dtype=torch.long)  # 生成位置编码
+        positions = torch.arange(num_tokens, device="cuda", dtype=torch.long)  # mlp 生成位置编码
 
-        if self.profile_method == ProfileMethod.RECORD_FUNCTION.value:  # 如果使用RECORD_FUNCTION方法
-            # 预运行模型一次，确保捕获的图不包含初始基准测试（如Triton自动调优）的内核启动
+        # 获取 Attention 的输入张量
+        seq_metadata_list, query, key, value, kv_cache = self._get_input_tensors(  # 获取输入张量
+            attention_input,
+        )
+
+        # === 预热阶段 ===
+        if self.profile_method == ProfileMethod.RECORD_FUNCTION.value:  # mlp 如果使用RECORD_FUNCTION方法
+            # mlp 预运行模型一次，确保捕获的图不包含初始基准测试（如Triton自动调优）的内核启动
             self.model(
                 input_ids,
                 positions,
@@ -210,3 +228,81 @@ class SarathiWrapper:
         self.timer_stats_store.clear_stats()  # 再次清除时间统计信息
 
         return stats  # 返回性能分析结果
+    
+        ### att
+        # 批量大小在预填充阶段始终为1，在解码阶段可以不同
+        assert attention_input.is_valid(self._max_model_len)  # 确保输入有效
+
+        seq_metadata_list, query, key, value, kv_cache = self._get_input_tensors(  # 获取输入张量
+            attention_input,
+        )
+        get_attention_wrapper().begin_forward(seq_metadata_list)  # 开始前向传播
+
+        for _ in range(WARMUP_STEPS):  # 预热步骤
+            get_attention_wrapper().forward(query, key, value, kv_cache)  # 前向传播
+        torch.cuda.synchronize()  # 同步CUDA设备
+
+        self.time_stats_store.clear_stats()  # 清除时间统计信息
+
+        for _ in range(ACTIVE_STEPS):  # 活跃步骤
+            get_attention_wrapper().forward(query, key, value, kv_cache)  # 前向传播
+        torch.cuda.synchronize()  # 同步CUDA设备
+
+        get_attention_wrapper().end_forward()  # 结束前向传播
+
+        return {  # 返回性能分析结果
+            "time_stats": self.time_stats_store.get_stats(),  # 时间统计信息
+            "n_embd": self._model_config.embedding_dim,  # 嵌入维度
+            "n_q_head": self._model_config.num_q_heads,  # 查询头数量
+            "n_kv_head": self._model_config.num_kv_heads,  # 键值头数量
+            "block_size": self._block_size,  # 块大小
+            "num_tensor_parallel_workers": self._parallel_config.tensor_parallel_size,  # 张量并行worker数量
+            "max_model_len": self._max_model_len,  # 最大模型长度
+            "batch_size": attention_input.batch_size,  # 批量大小
+            "prefill_chunk_size": attention_input.prefill_chunk_size,  # 预填充块大小
+            "kv_cache_size": attention_input.kv_cache_size,  # KV缓存大小
+            "is_prefill": attention_input.is_prefill,  # 是否为预填充阶段
+            "attention_backend": self._attention_backend,  # 注意力后端
+        }
+
+
+    # # att profile
+    # @torch.inference_mode()  # 推理模式装饰器，禁用梯度计算
+    # def profile(  # 性能分析方法
+    #     self,
+    #     attention_input: AttentionInput,  # 注意力输入对象
+    # ):
+    #     # 批量大小在预填充阶段始终为1，在解码阶段可以不同
+    #     assert attention_input.is_valid(self._max_model_len)  # 确保输入有效
+
+    #     seq_metadata_list, query, key, value, kv_cache = self._get_input_tensors(  # 获取输入张量
+    #         attention_input,
+    #     )
+    #     get_attention_wrapper().begin_forward(seq_metadata_list)  # 开始前向传播
+
+    #     for _ in range(WARMUP_STEPS):  # 预热步骤
+    #         get_attention_wrapper().forward(query, key, value, kv_cache)  # 前向传播
+    #     torch.cuda.synchronize()  # 同步CUDA设备
+
+    #     self.time_stats_store.clear_stats()  # 清除时间统计信息
+
+    #     for _ in range(ACTIVE_STEPS):  # 活跃步骤
+    #         get_attention_wrapper().forward(query, key, value, kv_cache)  # 前向传播
+    #     torch.cuda.synchronize()  # 同步CUDA设备
+
+    #     get_attention_wrapper().end_forward()  # 结束前向传播
+
+    #     return {  # 返回性能分析结果
+    #         "time_stats": self.time_stats_store.get_stats(),  # 时间统计信息
+    #         "n_embd": self._model_config.embedding_dim,  # 嵌入维度
+    #         "n_q_head": self._model_config.num_q_heads,  # 查询头数量
+    #         "n_kv_head": self._model_config.num_kv_heads,  # 键值头数量
+    #         "block_size": self._block_size,  # 块大小
+    #         "num_tensor_parallel_workers": self._parallel_config.tensor_parallel_size,  # 张量并行worker数量
+    #         "max_model_len": self._max_model_len,  # 最大模型长度
+    #         "batch_size": attention_input.batch_size,  # 批量大小
+    #         "prefill_chunk_size": attention_input.prefill_chunk_size,  # 预填充块大小
+    #         "kv_cache_size": attention_input.kv_cache_size,  # KV缓存大小
+    #         "is_prefill": attention_input.is_prefill,  # 是否为预填充阶段
+    #         "attention_backend": self._attention_backend,  # 注意力后端
+    #     }

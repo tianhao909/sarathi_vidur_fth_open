@@ -277,61 +277,31 @@ def profile_model(
     # ]  # 根据 GPU 数量创建多个 model_wrapper 实例
 
 
-    # for num_tokens in num_tokens_to_profile:  # 遍历要分析的token数量
-    #     worker_id = len(promises)  # 获取工作者ID
-    #     # # fth mlp+att
-    #     # def profile(
-    #     #     self, 
-    #     #     num_tokens: int, 
-    #     #     attention_input: AttentionInput,  # 注意力输入对象
-    #     # ):  # 定义性能分析方法，接收token数量作为参数
-
-    #     # promise = model_wrappers[worker_id].profile.remote(
-    #     #     num_tokens,
-    #     # )  # 调用模型的profile方法
-    #     promise = model_wrappers[worker_id].profile.remote(
-    #         num_tokens,
-    #         attention_input,
-    #     )  # 调用模型的profile方法
-    #     promises.append(promise)  # 添加到异步任务列表
-
-    #     if len(promises) >= args.num_gpus:  # 如果达到GPU限制
-    #         results = ray.get(promises)  # 获取异步任务结果
-    #         all_results.extend(results)  # 添加到所有结果列表
-    #         promises = []  # 清空异步任务列表
-
-    #     pbar.update(1)  # 更新进度条
-
     for num_tokens in num_tokens_to_profile:  # 遍历要分析的token数量
-        for attention_input in input_combinations:  # 遍历所有注意力输入组合
+        worker_id = len(promises)  # 获取工作者ID
+        promise = model_wrappers[worker_id].profile.remote(
+            num_tokens,
+        )  # 调用模型的profile方法
+        promises.append(promise)  # 添加到异步任务列表
 
-            worker_id = len(promises)  # 获取工作者ID
-            # # fth mlp+att
-            promise = model_wrappers[worker_id].profile.remote(
-                num_tokens,
-                attention_input,
-            )  # 调用模型的profile方法
-            promises.append(promise)  # 添加到异步任务列表
+        if len(promises) >= args.num_gpus:  # 如果达到GPU限制
+            results = ray.get(promises)  # 获取异步任务结果
+            all_results.extend(results)  # 添加到所有结果列表
+            promises = []  # 清空异步任务列表
 
-            if len(promises) >= args.num_gpus:  # 如果达到GPU限制
-                results = ray.get(promises)  # 获取异步任务结果
-                all_results.extend(results)  # 添加到所有结果列表
-                promises = []  # 清空异步任务列表
+        pbar.update(1)  # 更新进度条
 
-            pbar.update(1)  # 更新进度条
+    for attention_input in input_combinations:  # 遍历所有注意力输入组合
+        worker_id = len(promises)  # 获取当前 worker 的 ID
+        promise = model_wrappers[worker_id].profile.remote(attention_input)  # 异步调用 profile 方法
+        promises.append(promise)  # 将 promise 添加到 promises 列表中
 
+        if len(promises) >= args.num_gpus:  # 如果 promises 的长度达到 GPU 数量
+            results = ray.get(promises)  # 获取所有 promises 的结果
+            all_results.extend(results)  # 将结果添加到 all_results 列表中
+            promises = []  # 清空 promises 列表
 
-    # for attention_input in input_combinations:  # 遍历所有注意力输入组合
-    #     worker_id = len(promises)  # 获取当前 worker 的 ID
-    #     promise = model_wrappers[worker_id].profile.remote(attention_input)  # 异步调用 profile 方法
-    #     promises.append(promise)  # 将 promise 添加到 promises 列表中
-
-    #     if len(promises) >= args.num_gpus:  # 如果 promises 的长度达到 GPU 数量
-    #         results = ray.get(promises)  # 获取所有 promises 的结果
-    #         all_results.extend(results)  # 将结果添加到 all_results 列表中
-    #         promises = []  # 清空 promises 列表
-
-    #     pbar.update(1)  # 更新进度条
+        pbar.update(1)  # 更新进度条
 
     # for num_tensor_parallel_workers in args.num_tensor_parallel_workers:  # 遍历张量并行工作者数量
     #     if model_config.no_tensor_parallel and num_tensor_parallel_workers > 1:  # 判断是否需要张量并行
@@ -471,6 +441,70 @@ def main():  # 定义main函数，程序的主入口
     #     os.makedirs(f"{args.output_dir}/{model}", exist_ok=True)
     #     # result_df.to_csv(f"{args.output_dir}/{model}/mlp.csv", index=False)  # 保存分析结果为CSV文件
     #     result_df.to_csv(f"{args.output_dir}/{model}/mlp.csv", index=False)  # 保存分析结果为CSV文件
+
+    #### att main
+    #   args = parse_args()  # 解析命令行参数
+
+    # # 如果没有禁用 Ray，则初始化 Ray
+    # # if not args.disable_ray:
+    # #     ray.init(num_gpus=args.num_gpus,_temp_dir="/mnt/fth/software5/ray_tmp_fth/tmp")  # 初始化 Ray，指定 GPU 数量和临时目录
+
+    # dtype = torch.float16  # 设置数据类型为 float16
+    # input_combinations = get_attention_input_combinations(
+    #     args.max_seq_len,
+    #     args.min_batch_size,
+    #     args.max_batch_size,
+    #     args.profile_only_prefill,
+    #     args.profile_only_decode,
+    # )  # 获取所有注意力输入组合
+
+    # total_combos = {}  # 初始化 total_combos 字典，用于存储每个模型和并行工作者数量的输入组合
+    # max_num_blocks_dict = {}  # 初始化 max_num_blocks_dict 字典，用于存储每个模型和并行工作者数量的最大块数
+    # for model in args.models:  # 遍历所有模型
+    #     model_config = ModelConfig.from_model_name(model)  # 获取模型配置
+    #     for num_tensor_parallel_workers in args.num_tensor_parallel_workers:  # 遍历所有并行工作者数量
+    #         max_num_blocks = get_max_num_blocks(
+    #             model_config,
+    #             ParallelConfig(
+    #                 tensor_parallel_size=num_tensor_parallel_workers,
+    #                 pipeline_parallel_size=1,
+    #             ),
+    #             args.block_size,
+    #             dtype,
+    #         )  # 计算最大块数
+    #         max_num_blocks_dict[(model, num_tensor_parallel_workers)] = max_num_blocks  # 存储最大块数
+    #         total_combos[(model, num_tensor_parallel_workers)] = list(
+    #             filter(
+    #                 lambda input_combination: input_combination.is_under_memory_limit(
+    #                     max_num_blocks * args.block_size
+    #                 ),
+    #                 input_combinations,
+    #             )
+    #         )  # 过滤输入组合，确保在内存限制下
+
+    # pbar = tqdm(total=sum(len(v) for v in total_combos.values()))  # 创建一个进度条，总数为所有组合的总和
+
+    # for model in args.models:  # 遍历所有模型
+    #     result_df = pd.DataFrame()  # 初始化结果 DataFrame
+    #     for num_tensor_parallel_workers in args.num_tensor_parallel_workers:  # 遍历所有并行工作者数量
+    #         result_df = pd.concat(
+    #             [
+    #                 result_df,
+    #                 profile_model(
+    #                     args,
+    #                     model,
+    #                     num_tensor_parallel_workers,
+    #                     total_combos[(model, num_tensor_parallel_workers)],
+    #                     max_num_blocks_dict[(model, num_tensor_parallel_workers)],
+    #                     dtype,
+    #                     pbar,
+    #                 ),
+    #             ]
+    #         )  # 分析模型并合并结果
+    #     # 模型名称可能包含 '/', 因此创建相应的目录
+    #     os.makedirs(f"{args.output_dir}/{model}", exist_ok=True)  # 创建模型对应的输出目录
+    #     result_df.to_csv(f"{args.output_dir}/{model}/attention.csv", index=False)  # 将结果保存为 CSV 文件
+
 
 if __name__ == "__main__":  # 判断是否在主模块中执行
     main()  # 调用main函数
