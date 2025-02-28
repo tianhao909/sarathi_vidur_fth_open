@@ -125,7 +125,7 @@ class AttentionWrapper:  # 定义注意力包装器类
         seq_metadata_list, query, key, value, kv_cache = self._get_input_tensors(  # 获取输入张量
             attention_input,
         )
-        get_attention_wrapper().begin_forward(seq_metadata_list)  # 开始前向传播
+        get_attention_wrapper().begin_forward(seq_metadata_list)  # att开始前向传播
 
         for _ in range(WARMUP_STEPS):  # 预热步骤
             get_attention_wrapper().forward(query, key, value, kv_cache)  # 前向传播
