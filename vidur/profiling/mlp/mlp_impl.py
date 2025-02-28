@@ -64,6 +64,7 @@ class CausalSelfAttention(torch.nn.Module):
         self._attn_rope_timer = CudaTimer("attn_rope")
 
     def forward(self, hidden_states, positions):
+        # print(f">>fth 调用我了吗 ？ CausalSelfAttention的forward /mnt/fth/software5/vidur/vidur/profiling/mlp/mlp_impl.py")
         qkv, _ = self.qkv_proj(hidden_states)
         q, k, v = qkv.split([self.q_size, self.kv_size, self.kv_size], dim=-1)
         with self._attn_rope_timer:
@@ -215,6 +216,7 @@ class GPTModel(torch.nn.Module):
         self.block = GPTBlock(config, world_size=world_size)
 
     def forward(self, input_ids, positions):
+        print(f"    >>fth 调用forward /mnt/fth/software5/vidur/vidur/profiling/mlp/mlp_impl.py")
         hidden_states = self.embed_tokens(input_ids)
         residual = hidden_states
         for _ in range(self.num_repeat_steps):

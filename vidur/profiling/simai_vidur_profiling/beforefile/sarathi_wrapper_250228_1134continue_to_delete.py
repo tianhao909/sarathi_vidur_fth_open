@@ -42,11 +42,23 @@ from vidur.profiling.attention.sequence_proxy import SequenceMetadataProxy  # �
 # from vidur.profiling.common.timer_stats_store import TimerStatsStore  # 导入TimerStatsStore类，用于存储时间统计信息
 
 
-# WARMUP_STEPS = 2  # 定义预热步数，用于在正式性能分析前进行模型预热
-# ACTIVE_STEPS = 20  # 定义正式性能分析的步数
-WARMUP_STEPS = 1  # 定义预热步数，用于在正式性能分析前进行模型预热
-ACTIVE_STEPS = 1  # 定义正式性能分析的步数
+WARMUP_STEPS = 2  # 定义预热步数，用于在正式性能分析前进行模型预热
+ACTIVE_STEPS = 20  # 定义正式性能分析的步数
 
+
+        # model_wrapper_actor.remote(
+        #     model_config,
+        #     num_tensor_parallel_workers,
+        #     args.profile_method,
+        #     rank,
+        #     args.output_dir,
+        #     parallel_config,
+        #     max_num_blocks,
+        #     args.max_model_len,
+        #     args.block_size,
+        #     args.attention_backend,
+        #     dtype,
+        # )
 
 # class MlpWrapper:
 class SarathiWrapper:
@@ -85,7 +97,7 @@ class SarathiWrapper:
         self.output_dir = output_dir  # 保存输出目录路径
         os.makedirs(f"{self.output_dir}/profiler_traces/", exist_ok=True)  # 创建性能分析跟踪文件的目录
 
-        # mlp 初始化GPT模型，传入模型配置、张量并行工作线程数以及步数
+        # 初始化GPT模型，传入模型配置、张量并行工作线程数以及步数
         self.model = GPTModel(
             model_config,
             num_tensor_parallel_workers,
@@ -95,8 +107,8 @@ class SarathiWrapper:
                 else 1
             ),
         )
-        initialize_dummy_weights(self.model)  # mlp 初始化模型的虚拟权重
-        self.model = self.model.to(dtype=torch.float16).cuda().eval()  # mlp将模型转换为float16精度，并移动到CUDA设备上，设置为评估模式
+        initialize_dummy_weights(self.model)  # 初始化模型的虚拟权重
+        self.model = self.model.to(dtype=torch.float16).cuda().eval()  # 将模型转换为float16精度，并移动到CUDA设备上，设置为评估模式
 
         ##### fth att
         # self.time_stats_store = TimerStatsStore(profile_method="kineto")  # 初始化时间统计存储对象
@@ -208,14 +220,12 @@ class SarathiWrapper:
 
         if self.profile_method == ProfileMethod.RECORD_FUNCTION.value:  # mlp 如果使用RECORD_FUNCTION方法
             print(f">>fth 走这条路径 if self.profile_method == ProfileMethod.RECORD_FUNCTION.value:  # mlp 如果使用RECORD_FUNCTION方法")
-            # print(f">>进入self.model() /mnt/fth/software5/vidur/vidur/profiling/simai_vidur_profiling/sarathi_wrapper.py")
             
             # mlp 预运行模型一次，确保捕获的图不包含初始基准测试（如Triton自动调优）的内核启动
             self.model(
                 input_ids,
                 positions,
             )
-            # print(f">>退出self.model()")
             get_attention_wrapper().begin_forward(seq_metadata_list)  # att开始前向传播
             torch.cuda.synchronize()  # mlp确保所有CUDA操作完成
 
@@ -244,16 +254,14 @@ class SarathiWrapper:
         else:
             print(f">>fth 走这条路径 self.profile_method={self.profile_method}")
             
-            get_attention_wrapper().begin_forward(seq_metadata_list)  # att开始前向传播
-            
+
             # 预热步骤：运行 MLP 和注意力机制若干次
             for _ in range(WARMUP_STEPS):  # 进行预热步数的模型运行
-
                 self.model(
                     input_ids,
                     positions,
                 )
-
+                get_attention_wrapper().begin_forward(seq_metadata_list)  # att开始前向传播
                 get_attention_wrapper().forward(query, key, value, kv_cache)  # att前向传播
                 torch.cuda.synchronize()  # att同步CUDA设备
 
@@ -262,12 +270,10 @@ class SarathiWrapper:
             self.time_stats_store.clear_stats()  # att清除时间统计信息
 
             for _ in range(ACTIVE_STEPS):  # mlp进行正式性能分析步数的模型运行
-                print(f">>进入self.model() /mnt/fth/software5/vidur/vidur/profiling/simai_vidur_profiling/sarathi_wrapper.py")
                 self.model(
                     input_ids,
                     positions,
                 )
-                print(f">>退出self.model()")
                 get_attention_wrapper().forward(query, key, value, kv_cache)  # att前向传播
 
             torch.cuda.synchronize()  # mlp确保所有CUDA操作完成
@@ -278,9 +284,7 @@ class SarathiWrapper:
             att_time_stats = self.time_stats_store.get_stats()  # # att时间统计信息
 
 
-        stats = {  
-            # "time_stats": {**mlp_time_stats, **att_time_stats},  # fth 合并时间统计信息
-            # mlp构造性能分析结果字典
+        stats = {  # mlp构造性能分析结果字典
             # MLP 部分的统计信息
             # "time_stats": time_stats,  # mlp时间统计信息
             "mlp_time_stats": mlp_time_stats,  # mlp获取时间统计信息
@@ -314,3 +318,136 @@ class SarathiWrapper:
         self.time_stats_store.clear_stats() # att清除时间统计信息
         return stats  # fth mlp注释返回性能分析结果
     
+        # # === 预热阶段 ===
+        # if self.profile_method == ProfileMethod.RECORD_FUNCTION.value:  # mlp 如果使用RECORD_FUNCTION方法
+        #     # mlp 预运行模型一次，确保捕获的图不包含初始基准测试（如Triton自动调优）的内核启动
+        #     self.model(
+        #         input_ids,
+        #         positions,
+        #     )
+        #     torch.cuda.synchronize()  # 确保所有CUDA操作完成
+
+        #     self.timer_stats_store.clear_stats()  # 清除时间统计信息
+
+        #     record_function_tracer = RecordFunctionTracer(self.output_dir)  # 初始化记录函数跟踪器
+
+        #     with record_function_tracer:  # 使用记录函数跟踪器上下文管理器
+        #         self.model(
+        #             input_ids,
+        #             positions,
+        #         )  # 再次运行模型以捕获函数调用跟踪
+
+        #     time_stats = record_function_tracer.get_operation_time_stats()  # 获取操作时间统计信息
+        # else:  # 如果使用其他性能分析方法
+        #     for _ in range(WARMUP_STEPS):  # 进行预热步数的模型运行
+        #         self.model(
+        #             input_ids,
+        #             positions,
+        #         )
+
+        #     torch.cuda.synchronize()  # 确保所有CUDA操作完成
+
+        #     self.timer_stats_store.clear_stats()  # 清除时间统计信息
+
+        #     for _ in range(ACTIVE_STEPS):  # 进行正式性能分析步数的模型运行
+        #         self.model(
+        #             input_ids,
+        #             positions,
+        #         )
+
+        #     torch.cuda.synchronize()  # 确保所有CUDA操作完成
+
+        #     time_stats = self.timer_stats_store.get_stats()  # 获取时间统计信息
+
+        # stats = {  # 构造性能分析结果字典
+        #     "time_stats": time_stats,  # 时间统计信息
+        #     "n_head": self.model_config.num_q_heads,  # 查询头数量
+        #     "n_kv_head": self.model_config.num_kv_heads,  # 键值头数量
+        #     "n_embd": self.model_config.embedding_dim,  # 嵌入维度
+        #     "n_expanded_embd": self.model_config.mlp_hidden_dim,  # MLP隐藏层维度
+        #     "vocab_size": self.model_config.vocab_size,  # 词汇表大小
+        #     "use_gated_mlp": self.model_config.use_gated_mlp,  # 是否使用门控MLP
+        #     "num_tokens": num_tokens,  # token数量
+        #     "num_tensor_parallel_workers": self.num_tensor_parallel_workers,  # 张量并行工作线程数
+        # }
+        # self.timer_stats_store.clear_stats()  # 再次清除时间统计信息
+
+        # return stats  # 返回性能分析结果
+    
+        ### att
+        # 批量大小在预填充阶段始终为1，在解码阶段可以不同
+        assert attention_input.is_valid(self._max_model_len)  # 确保输入有效
+
+        seq_metadata_list, query, key, value, kv_cache = self._get_input_tensors(  # 获取输入张量
+            attention_input,
+        )
+        get_attention_wrapper().begin_forward(seq_metadata_list)  # 开始前向传播
+
+        for _ in range(WARMUP_STEPS):  # 预热步骤
+            get_attention_wrapper().forward(query, key, value, kv_cache)  # 前向传播
+        torch.cuda.synchronize()  # 同步CUDA设备
+
+        self.time_stats_store.clear_stats()  # 清除时间统计信息
+
+        for _ in range(ACTIVE_STEPS):  # 活跃步骤
+            get_attention_wrapper().forward(query, key, value, kv_cache)  # 前向传播
+        torch.cuda.synchronize()  # 同步CUDA设备
+
+        get_attention_wrapper().end_forward()  # 结束前向传播
+
+        return {  # 返回性能分析结果
+            "time_stats": self.time_stats_store.get_stats(),  # 时间统计信息
+            "n_embd": self._model_config.embedding_dim,  # 嵌入维度
+            "n_q_head": self._model_config.num_q_heads,  # 查询头数量
+            "n_kv_head": self._model_config.num_kv_heads,  # 键值头数量
+            "block_size": self._block_size,  # 块大小
+            "num_tensor_parallel_workers": self._parallel_config.tensor_parallel_size,  # 张量并行worker数量
+            "max_model_len": self._max_model_len,  # 最大模型长度
+            "batch_size": attention_input.batch_size,  # 批量大小
+            "prefill_chunk_size": attention_input.prefill_chunk_size,  # 预填充块大小
+            "kv_cache_size": attention_input.kv_cache_size,  # KV缓存大小
+            "is_prefill": attention_input.is_prefill,  # 是否为预填充阶段
+            "attention_backend": self._attention_backend,  # 注意力后端
+        }
+
+
+    # # att profile
+    # @torch.inference_mode()  # 推理模式装饰器，禁用梯度计算
+    # def profile(  # 性能分析方法
+    #     self,
+    #     attention_input: AttentionInput,  # 注意力输入对象
+    # ):
+    #     # 批量大小在预填充阶段始终为1，在解码阶段可以不同
+    #     assert attention_input.is_valid(self._max_model_len)  # 确保输入有效
+
+    #     seq_metadata_list, query, key, value, kv_cache = self._get_input_tensors(  # 获取输入张量
+    #         attention_input,
+    #     )
+    #     get_attention_wrapper().begin_forward(seq_metadata_list)  # 开始前向传播
+
+    #     for _ in range(WARMUP_STEPS):  # 预热步骤
+    #         get_attention_wrapper().forward(query, key, value, kv_cache)  # 前向传播
+    #     torch.cuda.synchronize()  # 同步CUDA设备
+
+    #     self.time_stats_store.clear_stats()  # 清除时间统计信息
+
+    #     for _ in range(ACTIVE_STEPS):  # 活跃步骤
+    #         get_attention_wrapper().forward(query, key, value, kv_cache)  # 前向传播
+    #     torch.cuda.synchronize()  # 同步CUDA设备
+
+    #     get_attention_wrapper().end_forward()  # 结束前向传播
+
+    #     return {  # 返回性能分析结果
+    #         "time_stats": self.time_stats_store.get_stats(),  # 时间统计信息
+    #         "n_embd": self._model_config.embedding_dim,  # 嵌入维度
+    #         "n_q_head": self._model_config.num_q_heads,  # 查询头数量
+    #         "n_kv_head": self._model_config.num_kv_heads,  # 键值头数量
+    #         "block_size": self._block_size,  # 块大小
+    #         "num_tensor_parallel_workers": self._parallel_config.tensor_parallel_size,  # 张量并行worker数量
+    #         "max_model_len": self._max_model_len,  # 最大模型长度
+    #         "batch_size": attention_input.batch_size,  # 批量大小
+    #         "prefill_chunk_size": attention_input.prefill_chunk_size,  # 预填充块大小
+    #         "kv_cache_size": attention_input.kv_cache_size,  # KV缓存大小
+    #         "is_prefill": attention_input.is_prefill,  # 是否为预填充阶段
+    #         "attention_backend": self._attention_backend,  # 注意力后端
+    #     }

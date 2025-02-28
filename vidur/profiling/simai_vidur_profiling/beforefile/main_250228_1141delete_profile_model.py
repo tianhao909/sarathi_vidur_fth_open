@@ -250,47 +250,6 @@ def profile_model(
     ]
 
 
-    for num_tokens in num_tokens_to_profile:  # 遍历要分析的token数量
-        for attention_input in input_combinations:  # 遍历所有注意力输入组合
-
-            worker_id = len(promises)  # 获取工作者ID
-            # # fth mlp+att
-            promise = model_wrappers[worker_id].profile.remote(
-                num_tokens,
-                attention_input,
-            )  # 调用模型的profile方法
-            promises.append(promise)  # 添加到异步任务列表
-
-            if len(promises) >= args.num_gpus:  # 如果达到GPU限制
-                results = ray.get(promises)  # 获取异步任务结果
-                all_results.extend(results)  # 添加到所有结果列表
-                promises = []  # 清空异步任务列表
-
-            pbar.update(1)  # 更新进度条
-
-    results = ray.get(promises)  # 获取剩余异步任务结果
-    all_results.extend(results)  # 添加到所有结果列表
-
-    # df = pd.DataFrame(all_results)  # 将结果转换为DataFrame
-    # # 将时间统计数据展开为多个列，并添加前缀
-    # df = (
-    #     pd.json_normalize(df["time_stats"])
-    #     .add_prefix("time_stats.")
-    #     .join(df.drop(columns=["time_stats"]))
-    # )
-
-    # fth
-    df = pd.DataFrame(all_results)  # 将结果转换为DataFrame
-    # 展开mlp_time_stats并添加前缀
-    mlp_df = pd.json_normalize(df["mlp_time_stats"]).add_prefix("mlp_time_stats.")
-    # 展开att_time_stats并添加前缀
-    att_df = pd.json_normalize(df["att_time_stats"]).add_prefix("att_time_stats.")
-    # 将展开后的列与原DataFrame（去除原始嵌套列）合并
-    df = df.drop(columns=["mlp_time_stats", "att_time_stats"]).join([mlp_df, att_df])
-
-    return df  # 返回结果DataFrame
-
-
     # mlp wrapper
     # model_wrappers = [
     #     model_wrapper_actor.remote(
@@ -343,7 +302,26 @@ def profile_model(
 
     #     pbar.update(1)  # 更新进度条
 
-        # for attention_input in input_combinations:  # 遍历所有注意力输入组合
+    for num_tokens in num_tokens_to_profile:  # 遍历要分析的token数量
+        for attention_input in input_combinations:  # 遍历所有注意力输入组合
+
+            worker_id = len(promises)  # 获取工作者ID
+            # # fth mlp+att
+            promise = model_wrappers[worker_id].profile.remote(
+                num_tokens,
+                attention_input,
+            )  # 调用模型的profile方法
+            promises.append(promise)  # 添加到异步任务列表
+
+            if len(promises) >= args.num_gpus:  # 如果达到GPU限制
+                results = ray.get(promises)  # 获取异步任务结果
+                all_results.extend(results)  # 添加到所有结果列表
+                promises = []  # 清空异步任务列表
+
+            pbar.update(1)  # 更新进度条
+
+
+    # for attention_input in input_combinations:  # 遍历所有注意力输入组合
     #     worker_id = len(promises)  # 获取当前 worker 的 ID
     #     promise = model_wrappers[worker_id].profile.remote(attention_input)  # 异步调用 profile 方法
     #     promises.append(promise)  # 将 promise 添加到 promises 列表中
@@ -385,6 +363,18 @@ def profile_model(
 
         #     pbar.update(1)  # 更新进度条
 
+    results = ray.get(promises)  # 获取剩余异步任务结果
+    all_results.extend(results)  # 添加到所有结果列表
+
+    df = pd.DataFrame(all_results)  # 将结果转换为DataFrame
+    # 将时间统计数据展开为多个列，并添加前缀
+    df = (
+        pd.json_normalize(df["time_stats"])
+        .add_prefix("time_stats.")
+        .join(df.drop(columns=["time_stats"]))
+    )
+
+    return df  # 返回结果DataFrame
 
 
 def main():  # 定义main函数，程序的主入口
