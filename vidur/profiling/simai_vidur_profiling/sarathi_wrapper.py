@@ -207,7 +207,7 @@ class SarathiWrapper:
         # 根据配置选择性能分析方法
 
         if self.profile_method == ProfileMethod.RECORD_FUNCTION.value:  # mlp 如果使用RECORD_FUNCTION方法
-            print(f">>fth 走这条路径 if self.profile_method == ProfileMethod.RECORD_FUNCTION.value:  # mlp 如果使用RECORD_FUNCTION方法")
+            # print(f">>fth 走这条路径 if self.profile_method == ProfileMethod.RECORD_FUNCTION.value:  # mlp 如果使用RECORD_FUNCTION方法")
             # print(f">>进入self.model() /mnt/fth/software5/vidur/vidur/profiling/simai_vidur_profiling/sarathi_wrapper.py")
             
             # mlp 预运行模型一次，确保捕获的图不包含初始基准测试（如Triton自动调优）的内核启动

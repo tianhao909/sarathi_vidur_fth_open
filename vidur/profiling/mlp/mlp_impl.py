@@ -70,14 +70,15 @@ class CausalSelfAttention(torch.nn.Module):
         with self._attn_rope_timer:
             q, k = self.rotary_emb(positions, q, k)
 
-        print(f">>fth  self._attn_rope_timer={self._attn_rope_timer}") 
-        print(f">>fth  self._attn_rope_timer.timer_stats_store={self._attn_rope_timer.timer_stats_store}") 
-        for key, value in vars(self._attn_rope_timer).items():
-            print(f">>fth  {key}: {value}")
-        for key, value in vars(self._attn_rope_timer.timer_stats_store).items():
-            print(f">>fth--  {key}: {value}")
-        for key, value in vars(self._attn_rope_timer.profiler).items():
-            print(f">>fth--++  {key}: {value}")
+        # print(f">>fth  self._attn_rope_timer={self._attn_rope_timer}") 
+        # print(f">>fth  self._attn_rope_timer.timer_stats_store={self._attn_rope_timer.timer_stats_store}") 
+        print(f">>fth-- self._attn_rope_timer.timer_stats_store.TIMING_STATS={self._attn_rope_timer.timer_stats_store.TIMING_STATS}")
+        # for key, value in vars(self._attn_rope_timer).items():
+        #     print(f">>fth  {key}: {value}")
+        # for key, value in vars(self._attn_rope_timer.timer_stats_store).items():
+        #     print(f">>fth--  {key}: {value}")
+        # for key, value in vars(self._attn_rope_timer.profiler).items():
+        #     print(f">>fth--++  {key}: {value}")
         # output from attn has the same shape as q
         attn_output = torch.randn_like(q)
         output, _ = self.o_proj(attn_output)
@@ -127,7 +128,8 @@ class MLP(torch.nn.Module):
         hidden_states, _ = self.up_proj(hidden_states)
         with self.mlp_act_timer:
             hidden_states = self.act(hidden_states)
-        print(f">>fth  self.mlp_act_timer={self.mlp_act_timer}") 
+        # print(f">>fth  self.mlp_act_timer={self.mlp_act_timer}") 
+        print(f">>fth++ self.mlp_act_timer.timer_stats_store.TIMING_STATS={self.mlp_act_timer.timer_stats_store.TIMING_STATS}")
         hidden_states, _ = self.down_proj(hidden_states)
         return hidden_states
 
