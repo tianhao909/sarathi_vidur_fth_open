@@ -67,6 +67,8 @@ class CausalSelfAttention(torch.nn.Module):  # 定义因果自注意力模块
         q, k, v = qkv.split([self.q_size, self.kv_size, self.kv_size], dim=-1)  # 将QKV拆分为查询、键和值
         with self._attn_rope_timer:  # 使用计时器记录旋转位置编码时间
             q, k = self.rotary_emb(positions, q, k)  # 应用旋转位置编码
+
+        # print(f">>fth  self._attn_rope_timer={self._attn_rope_timer}")    
         # 输出从注意力机制中得到的结果，形状与q相同
         attn_output = torch.randn_like(q)  # 随机生成注意力输出（模拟）
         output, _ = self.o_proj(attn_output)  # 通过输出投影层计算最终输出
@@ -115,6 +117,7 @@ class MLP(torch.nn.Module):  # 定义多层感知机（MLP）模块
         hidden_states, _ = self.up_proj(hidden_states)  # 通过上投影层计算隐藏状态
         with self.mlp_act_timer:  # 使用计时器记录激活函数时间
             hidden_states = self.act(hidden_states)  # 应用激活函数
+        # print(f">>fth  self.mlp_act_timer={self.mlp_act_timer}") 
         hidden_states, _ = self.down_proj(hidden_states)  # 通过下投影层计算最终隐藏状态
         return hidden_states  # 返回隐藏状态
 

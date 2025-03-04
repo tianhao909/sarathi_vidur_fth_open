@@ -309,6 +309,13 @@ class SarathiWrapper:
             "attention_backend": self._attention_backend,  # att注意力后端
         }
 
+        # # fth 打印所有模块的时间
+        # print("模块耗时统计 (ms):")
+        # for name, times in timer_stats_store.times.items():
+        #     total = sum(times)
+        #     avg = total / len(times) if len(times) > 0 else 0
+        #     print(f"{name}: 总耗时={total:.2f}, 平均耗时={avg:.2f}")
+
         # 清除统计信息
         self.timer_stats_store.clear_stats() # mlp清除时间统计信息
         self.time_stats_store.clear_stats() # att清除时间统计信息
