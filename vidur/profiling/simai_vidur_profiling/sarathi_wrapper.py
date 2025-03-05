@@ -262,12 +262,13 @@ class SarathiWrapper:
             self.time_stats_store.clear_stats()  # att清除时间统计信息
 
             for _ in range(ACTIVE_STEPS):  # mlp进行正式性能分析步数的模型运行
-                print(f">>进入self.model() /mnt/fth/software5/vidur/vidur/profiling/simai_vidur_profiling/sarathi_wrapper.py")
+                # print(f">>进入self.model() /mnt/fth/software5/vidur/vidur/profiling/simai_vidur_profiling/sarathi_wrapper.py")
+                print(f">>self.model()  sarathi_wrapper.py")
                 self.model(
                     input_ids,
                     positions,
                 )
-                print(f">>退出self.model()")
+                print(f">>exit self.model()")
                 get_attention_wrapper().forward(query, key, value, kv_cache)  # att前向传播
 
             torch.cuda.synchronize()  # mlp确保所有CUDA操作完成
@@ -277,6 +278,11 @@ class SarathiWrapper:
             mlp_time_stats = self.timer_stats_store.get_stats()  # mlp获取时间统计信息
             att_time_stats = self.time_stats_store.get_stats()  # # att时间统计信息
 
+        # if hasattr(att_time_stats, '__dict__'):  # fth 检查是否有 __dict__ 属性
+        #     for key, value in vars(att_time_stats).items():
+        #         print(f"att_time_stats {key}: {value}")
+        # print("\n att_time_stats 的所有属性和方法:")
+        # print(dir(att_time_stats))
 
         stats = {  
             # "time_stats": {**mlp_time_stats, **att_time_stats},  # fth 合并时间统计信息

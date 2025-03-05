@@ -72,7 +72,8 @@ class CausalSelfAttention(torch.nn.Module):
 
         # print(f">>fth  self._attn_rope_timer={self._attn_rope_timer}") 
         # print(f">>fth  self._attn_rope_timer.timer_stats_store={self._attn_rope_timer.timer_stats_store}") 
-        print(f">>fth-- self._attn_rope_timer.timer_stats_store.TIMING_STATS={self._attn_rope_timer.timer_stats_store.TIMING_STATS}")
+        # print(f">>fth-- self._attn_rope_timer.timer_stats_store.TIMING_STATS={self._attn_rope_timer.timer_stats_store.TIMING_STATS}")
+        print(f"    ++ self._attn_rope_timer.timer_stats_store.TIMING_STATS={self._attn_rope_timer.timer_stats_store.TIMING_STATS}; mlp_impl.py")
         # for key, value in vars(self._attn_rope_timer).items():
         #     print(f">>fth  {key}: {value}")
         # for key, value in vars(self._attn_rope_timer.timer_stats_store).items():
@@ -129,7 +130,7 @@ class MLP(torch.nn.Module):
         with self.mlp_act_timer:
             hidden_states = self.act(hidden_states)
         # print(f">>fth  self.mlp_act_timer={self.mlp_act_timer}") 
-        print(f">>fth++ self.mlp_act_timer.timer_stats_store.TIMING_STATS={self.mlp_act_timer.timer_stats_store.TIMING_STATS}")
+        print(f"    ++ self.mlp_act_timer.timer_stats_store.TIMING_STATS={self.mlp_act_timer.timer_stats_store.TIMING_STATS}; mlp_impl.py")
         hidden_states, _ = self.down_proj(hidden_states)
         return hidden_states
 
@@ -228,7 +229,8 @@ class GPTModel(torch.nn.Module):
         self.block = GPTBlock(config, world_size=world_size)
 
     def forward(self, input_ids, positions):
-        print(f"    >>fth 调用forward /mnt/fth/software5/vidur/vidur/profiling/mlp/mlp_impl.py")
+        # print(f"    >>fth 调用forward /mnt/fth/software5/vidur/vidur/profiling/mlp/mlp_impl.py")
+        print(f"    >> forward /mlp/mlp_impl.py")
         hidden_states = self.embed_tokens(input_ids)
         residual = hidden_states
         for _ in range(self.num_repeat_steps):

@@ -1,0 +1,18 @@
+attention_backend: !!python/object/apply:sarathi.types.AttentionBackend
+- FLASHINFER
+block_size: 128
+disable_ray: true
+max_batch_size: 1
+max_model_len: 128
+max_seq_len: 128
+max_tokens: 1
+min_batch_size: 1
+models:
+- meta-llama/Llama-2-7b-hf
+num_gpus: 1
+num_tensor_parallel_workers:
+- 1
+output_dir: vidur/profiling/fth_profiling_outputs/simai_vidur_profiling/2025-03-05_10-21-07
+profile_method: kineto
+profile_only_decode: false
+profile_only_prefill: false
