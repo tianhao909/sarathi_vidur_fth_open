@@ -72,9 +72,14 @@ class CudaTimer:
             events = [e for e in events if e.name.startswith(self.filter_str)]
 
         total_cuda_time = self.aggregation_fn([e.cuda_time_total for e in events])
+        # self.timer_stats_store.record_time(
+        #     self.name, total_cuda_time * 1e-3
+        # )  # convert to ms # 微秒转毫秒
         self.timer_stats_store.record_time(
-            self.name, total_cuda_time * 1e-3
-        )  # convert to ms
+            self.name, float(total_cuda_time)
+        )  # keep to us
+        # print(f"保持us")
+
 
     def __exit__(self, *args):
         if self.disabled:
@@ -95,7 +100,8 @@ class CudaTimer:
             self.end_time = time.perf_counter()
             self.timer_stats_store.record_time(
                 self.name, (self.end_time - self.start_time) * 1e3
-            )  # convert to ms
+            )  # convert to ms # 秒转毫秒
+            print(f"！！fth * 1e3？？？？？ 不能* 1e3 /mnt/fth/software5/vidur/vidur/profiling/common/cuda_timer.py")
         else:
             raise ValueError(
                 f"Unknown profile method {self.timer_stats_store.profile_method}"
