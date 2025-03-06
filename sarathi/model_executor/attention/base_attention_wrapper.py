@@ -7,7 +7,7 @@ from sarathi.config import ModelConfig, ParallelConfig
 from sarathi.core.datatypes.sequence import SequenceMetadata
 from sarathi.metrics.constants import OperationMetrics
 from sarathi.metrics.cuda_timer import CudaTimer
-
+from sarathi.metrics.metrics_store import MetricsStore # fth add
 
 class BaseAttentionWrapper(ABC):
     _inst = None
@@ -34,8 +34,25 @@ class BaseAttentionWrapper(ABC):
     """
 
     def get_timer(self, operation: OperationMetrics, layer_id: Optional[int] = None):
+        # print(f"????fth self._timers.get((operation, layer_id))={self._timers.get((operation, layer_id))}")
         if self._timers.get((operation, layer_id)) is None:
             self._timers[(operation, layer_id)] = CudaTimer(operation, layer_id)
+        # print(f"????fth self._timers.get((operation, layer_id))={self._timers.get((operation, layer_id))}")
+        # print(vars(self._timers.get((operation, layer_id))))
+        
+        # print(f">>>>fth {vars(self._timers.get((operation, layer_id)).timer_stats_store)}")
+
+        # print(f"????fth self._timers[(operation, layer_id)]={self._timers[(operation, layer_id)]} /mnt/wqy/sarathi-serve/sarathi/model_executor/attention/base_attention_wrapper.py")
+        # print(f"self._timers[(operation, layer_id)].disabled={self._timers[(operation, layer_id)].disabled}")
+        # if not self._timers[(operation, layer_id)].disabled :
+        #     print(f"????fth {self._timers[(operation, layer_id)].name} ")
+            # print(f"????fth {self._timers[(operation, layer_id)].metrics_store} ")
+            # print(f"????MetricsStore.get_instance()={MetricsStore.get_instance()}")
+            # print(f"????fth {self._timers[(operation, layer_id)].name} ={self._timers[(operation, layer_id)].metrics_store.operation_metrics.get(self._timers[(operation, layer_id)].name)}")
+        #     pass
+        # else:
+            # print(f"????fth {self._timers[(operation, layer_id)].name} ={self._timers[(operation, layer_id)].metrics_store.operation_metrics.get(self._timers[(operation, layer_id)].name)} /mnt/wqy/sarathi-serve/sarathi/metrics/cuda_timer.py")
+        
         return self._timers.get((operation, layer_id))
 
     @abstractmethod

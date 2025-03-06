@@ -21,8 +21,10 @@ class CudaTimer:
             metric_name=self.name, layer_id=layer_id, rank=rank
         )
 
+        # print("OOOOfth before /mnt/wqy/sarathi-serve/sarathi/metrics/cuda_timer.py")
         if self.disabled:
             return
+        # print("OOOOfth after")
 
         self.use_cuda_events = False
 
@@ -32,6 +34,8 @@ class CudaTimer:
         )
         self.start_event = None
         self.end_event = None
+
+        
 
     def __enter__(self):
         if self.disabled:
@@ -52,6 +56,9 @@ class CudaTimer:
             self.name,
             total_cuda_time * 1e-3,  # convert to ms
         )
+        # print(f"xxxxfth {self.name} took {total_cuda_time * 1e-3} ms /mnt/wqy/sarathi-serve/sarathi/metrics/cuda_timer.py")
+        # print(f"xxxxfth {self.name} ={self.metrics_store.operation_metrics.get(self.name)}")
+        # print(f"????fth {self._timers[(operation, layer_id)].name} ={self._timers[(operation, layer_id)].metrics_store.operation_metrics.get(self._timers[(operation, layer_id)].name)}")
 
     def __exit__(self, *args):
         if self.disabled:
@@ -63,5 +70,7 @@ class CudaTimer:
             self.metrics_store.push_operation_metrics_events(
                 self.name, self.start_event, self.end_event
             )
+            # print(f"xxxxfth {self.name} took {total_cuda_time * 1e-3} ms /mnt/wqy/sarathi-serve/sarathi/metrics/cuda_timer.py")
+            # print(f"xxxxfth {self.name} ={self.metrics_store.operation_metrics.get(self.name)}")
         else:
             self.profiler.__exit__(*args)

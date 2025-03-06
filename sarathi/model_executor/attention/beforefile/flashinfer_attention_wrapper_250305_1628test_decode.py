@@ -7,7 +7,7 @@ from sarathi.config import ModelConfig, ParallelConfig
 from sarathi.core.datatypes.sequence import SequenceMetadata
 from sarathi.metrics.constants import OperationMetrics
 from sarathi.model_executor.attention.base_attention_wrapper import BaseAttentionWrapper
-from sarathi.metrics.metrics_store import MetricsStore # fth add 250305 1714
+
 
 class FlashinferAttentionWrapper(BaseAttentionWrapper):
     _inst = None
@@ -213,7 +213,6 @@ class FlashinferAttentionWrapper(BaseAttentionWrapper):
             # there is no need to call attention in profiling mode
             return torch.zeros_like(query)
 
-        # print(f"==fth attention forward ATTN_INPUT_RESHAPE")
         with self.get_timer(OperationMetrics.ATTN_INPUT_RESHAPE, layer_id):
             query = query.contiguous().reshape(-1, self.num_q_heads, self.head_dim)
             key = key.contiguous().reshape(-1, self.num_kv_heads, self.head_dim)
@@ -221,7 +220,6 @@ class FlashinferAttentionWrapper(BaseAttentionWrapper):
 
         output = torch.empty_like(query)
 
-        # print(f"==fth attention forward ATTN_KV_CACHE_SAVE")
         with self.get_timer(OperationMetrics.ATTN_KV_CACHE_SAVE, layer_id):
             append_paged_kv_cache(
                 key,
@@ -233,10 +231,7 @@ class FlashinferAttentionWrapper(BaseAttentionWrapper):
                 self.append_kv_last_page_len_tensor,
                 kv_layout="NHD",
             )
-        # print(f"==fth OperationMetrics.ATTN_KV_CACHE_SAVE = {OperationMetrics.ATTN_KV_CACHE_SAVE}")
-        # print(vars(OperationMetrics))
-        # metrics_store = MetricsStore.get_instance()
-        # print(f"==fth attention forward ATTN_PREFILL")
+
         with self.get_timer(OperationMetrics.ATTN_PREFILL, layer_id):
             if self.contains_prefill:
                 output[: self.num_prefill_tokens] = self.prefill_wrapper.forward(
@@ -246,7 +241,6 @@ class FlashinferAttentionWrapper(BaseAttentionWrapper):
                     sm_scale=softmax_scale,
                 )
 
-        # print(f"==fth attention forward ATTN_DECODE")
         with self.get_timer(OperationMetrics.ATTN_DECODE, layer_id):
             if self.contains_decode:
                 output[self.num_prefill_tokens : self.num_total_tokens] = (
@@ -258,34 +252,7 @@ class FlashinferAttentionWrapper(BaseAttentionWrapper):
                     )
                 )
 
-        print(f"==fth attention forward ATTN_OUTPUT_RESHAPE /mnt/wqy/sarathi-serve/sarathi/model_executor/attention/flashinfer_attention_wrapper.py")
         with self.get_timer(OperationMetrics.ATTN_OUTPUT_RESHAPE, layer_id):
             output = output.reshape(-1, self.num_q_heads * self.head_dim)
-        
-        print(f">>>>fth {vars(self._timers.get((OperationMetrics.ATTN_OUTPUT_RESHAPE, layer_id)).timer_stats_store)}")
 
-        # fth
-        # metrics_store = MetricsStore.get_instance()
-        # attn_decode_metrics = metrics_store.operation_metrics.get(OperationMetrics.ATTN_DECODE)
-        # attn_prefill_metrics = metrics_store.operation_metrics.get(OperationMetrics.ATTN_PREFILL)
-        # attn_input_reshape_metrics = metrics_store.operation_metrics.get(OperationMetrics.ATTN_INPUT_RESHAPE)
-        # attn_output_reshape_metrics = metrics_store.operation_metrics.get(OperationMetrics.ATTN_OUTPUT_RESHAPE)
-        
-        # print(vars(attn_decode_metrics))
-        # if attn_decode_metrics:
-        #     print("ATTN_DECODE 统计数据:")
-            # print(f"总次数: {attn_decode_metrics.count}")
-            # print(f"总时间: {attn_decode_metrics.sum} ms")
-            # print(f"平均时间: {attn_decode_metrics.mean()} ms")
-            # print(f"最大时间: {attn_decode_metrics.max()} ms")
-            # print(f"最小时间: {attn_decode_metrics.min()} ms")
-            # 你也可以根据需要打印更多统计信息
-
-        # if attn_prefill_metrics:
-        #     print("ATTN_PREFILL 统计数据:")
-            # print(f"总次数: {attn_prefill_metrics.count}")
-            # print(f"总时间: {attn_prefill_metrics.sum} ms")
-            # print(f"平均时间: {attn_prefill_metrics.mean()} ms")
-            # print(f"最大时间: {attn_prefill_metrics.max()} ms")
-            # print(f"最小时间: {attn_prefill_metrics.min()} ms")
         return output

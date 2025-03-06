@@ -170,9 +170,14 @@ class VocabParallelEmbedding(torch.nn.Module):
         # Mask the output embedding.
         if self.tensor_model_parallel_size > 1:
             output_parallel[input_mask, :] = 0.0
+        
+        # print(f"++fth VocabParallelEmbedding Communicating tensor of shape: {output_parallel.shape}")
+        print(f"    >> VocabParallelEmbedding all reduce comm size= {output_parallel.element_size() * output_parallel.nelement()} bytes")
+        # print(f"++fth self.result={self.reduce_results}")
         if self.reduce_results:
             # Reduce across all the model parallel GPUs.
             with self._communication_timer:
+                # print(f"++++fth VocabParallelEmbedding all reduce Communicating tensor of shape: {output_parallel.shape} gather_from_tensor_model_parallel_region ")
                 output = reduce_from_tensor_model_parallel_region(output_parallel)
         else:
             output = output_parallel
@@ -302,8 +307,13 @@ class ColumnParallelLinear(torch.nn.Module):
         input_parallel = input_
         # Matrix multiply.
         output_parallel = self.apply_weights(input_parallel, bias)
+        # print(f"++fth ColumnParallelLinear allgather Communicating tensor of shape: {output_parallel.shape}  ")
+        # print(f"    ++fth output_parallel.element_size()={output_parallel.element_size()} element_size()={output_parallel.element_size()} nelement()={output_parallel.nelement()} ")
+        print(f"    >> ColumnParallelLinear all gather comm size= {output_parallel.element_size() * output_parallel.nelement()} bytes")
+        # print(f"++fth comm_size ={output_parallel.element_size() * output_parallel.nelement()}，self.gather_output={self.gather_output}")
         if self.gather_output:
             # All-gather across the partitions.
+            # print(f"++fth ColumnParallelLinear allgather Communicating tensor of shape: {output_parallel.shape}")
             with self._communication_timer:
                 output = gather_from_tensor_model_parallel_region(output_parallel)
         else:
@@ -430,6 +440,7 @@ class RowParallelLinear(torch.nn.Module):
             return F.linear(x, self.weight)
 
     def forward(self, input_):
+        # print(f">>>>fth /mnt/wqy/sarathi-serve/sarathi/model_executor/parallel_utils/tensor_parallel/layers.py")
         """Forward of RowParallelLinear
 
         Args:
@@ -446,7 +457,11 @@ class RowParallelLinear(torch.nn.Module):
             input_parallel = scatter_to_tensor_model_parallel_region(input_)
         # Matrix multiply.
         output_parallel = self.apply_weights(input_parallel)
+        # print(f"++fth cRowParallelLinear all reduce Communicating tensor of shape: {output_parallel.shape}")
+        print(f"    >> cRowParallelLinear all reduce comm size= {output_parallel.element_size() * output_parallel.nelement()} bytes" )
+        # print(f"++fth self.reduce_results= {self.reduce_results} self.world_size= {self.world_size}")
         if self.reduce_results and self.world_size > 1:
+            # print(f"++fth cRowParallelLinear all reduce Communicating tensor of shape: {output_parallel.shape} gather_from_tensor_model_parallel_region ")
             with self._communication_timer:
                 output_ = reduce_from_tensor_model_parallel_region(output_parallel)
         else:
