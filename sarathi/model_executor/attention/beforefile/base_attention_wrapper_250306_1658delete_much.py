@@ -35,7 +35,7 @@ class BaseAttentionWrapper(ABC):
 
     def get_timer(self, operation: OperationMetrics, layer_id: Optional[int] = None):
         # print(f"<<fth layer_id={layer_id} OperationMetrics={OperationMetrics} self._timers.get((operation, layer_id))={self._timers.get((operation, layer_id))} /mnt/wqy/sarathi-serve/sarathi/model_executor/attention/base_attention_wrapper.py")
-        # print(f"<<fth layer_id={layer_id} OperationMetrics={OperationMetrics} self._timers.get((operation, layer_id))={self._timers.get((operation, layer_id))} ")
+        print(f"<<fth layer_id={layer_id} OperationMetrics={OperationMetrics} self._timers.get((operation, layer_id))={self._timers.get((operation, layer_id))} ")
 
         if self._timers.get((operation, layer_id)) is None:
             self._timers[(operation, layer_id)] = CudaTimer(operation, layer_id)

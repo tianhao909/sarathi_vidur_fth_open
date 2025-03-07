@@ -73,6 +73,8 @@ class FlashinferAttentionWrapper(BaseAttentionWrapper):
         # sequence in the ragged tensor. The length of the indptr tensor is the number of sequences + 1.
         # We perform both prefill and decode attention in a single call to batched prefill kernel.
         # prefill_qo_indptr: [0, prompt_0, prompt_0 + prompt_1, ..., prompt_0 + ... + prompt_N-1, generation_0, generation_0 + 1, ..., generation_0 + ... + M]
+        
+        # print("<<fth begin_forward /mnt/wqy/sarathi-serve/sarathi/model_executor/attention/flashinfer_attention_wrapper.py")
         prefill_qo_indptr: List[int] = [0]
         decode_qo_indptr: List[int] = [0]
         # The kv_page_indices tensor captures the pages of the key-value cache that
@@ -148,6 +150,7 @@ class FlashinferAttentionWrapper(BaseAttentionWrapper):
             )
 
         if self.contains_prefill:
+            print("^^^^fth prefill_wrapper.begin_forward /mnt/wqy/sarathi-serve/sarathi/model_executor/attention/flashinfer_attention_wrapper.py")
             self.prefill_wrapper.begin_forward(
                 self.to_int_tensor(prefill_qo_indptr),
                 self.to_int_tensor(prefill_kv_page_indptr),
@@ -160,6 +163,7 @@ class FlashinferAttentionWrapper(BaseAttentionWrapper):
             )
 
         if self.contains_decode:
+            print("^^^^fth decode_wrapper.begin_forward /mnt/wqy/sarathi-serve/sarathi/model_executor/attention/flashinfer_attention_wrapper.py")
             self.decode_wrapper.begin_forward(
                 self.to_int_tensor(decode_qo_indptr),
                 self.to_int_tensor(decode_kv_page_indptr),
@@ -219,6 +223,8 @@ class FlashinferAttentionWrapper(BaseAttentionWrapper):
             key = key.contiguous().reshape(-1, self.num_kv_heads, self.head_dim)
             value = value.contiguous().reshape(-1, self.num_kv_heads, self.head_dim)
 
+        # print(f">>>>fth {vars(self._timers.get((OperationMetrics.ATTN_OUTPUT_RESHAPE, layer_id)).timer_stats_store)}")
+
         output = torch.empty_like(query)
 
         # print(f"==fth attention forward ATTN_KV_CACHE_SAVE")
@@ -239,6 +245,7 @@ class FlashinferAttentionWrapper(BaseAttentionWrapper):
         # print(f"==fth attention forward ATTN_PREFILL")
         with self.get_timer(OperationMetrics.ATTN_PREFILL, layer_id):
             if self.contains_prefill:
+                print(f"==== prefill_wrapper.forward /mnt/wqy/sarathi-serve/sarathi/model_executor/attention/flashinfer_attention_wrapper.py")
                 output[: self.num_prefill_tokens] = self.prefill_wrapper.forward(
                     query[: self.num_prefill_tokens],
                     kv_cache,
@@ -249,6 +256,7 @@ class FlashinferAttentionWrapper(BaseAttentionWrapper):
         # print(f"==fth attention forward ATTN_DECODE")
         with self.get_timer(OperationMetrics.ATTN_DECODE, layer_id):
             if self.contains_decode:
+                print(f"==== decode_wrapper.forward /mnt/wqy/sarathi-serve/sarathi/model_executor/attention/flashinfer_attention_wrapper.py")
                 output[self.num_prefill_tokens : self.num_total_tokens] = (
                     self.decode_wrapper.forward(
                         query[self.num_prefill_tokens : self.num_total_tokens],
