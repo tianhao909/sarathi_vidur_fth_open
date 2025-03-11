@@ -6,6 +6,7 @@ from vidur.logger import init_logger
 from vidur.metrics import MetricsStore
 from vidur.scheduler import BaseGlobalScheduler
 from vidur.types import EventType
+import pdb
 
 logger = init_logger(__name__)
 
@@ -13,6 +14,7 @@ logger = init_logger(__name__)
 class BatchStageArrivalEvent(BaseEvent):
     def __init__(self, time: float, replica_id: int, stage_id: int, batch: Batch):
         super().__init__(time, EventType.BATCH_STAGE_ARRIVAL)
+        pdb.set_trace() # fth
 
         self._replica_id = replica_id
         self._stage_id = stage_id

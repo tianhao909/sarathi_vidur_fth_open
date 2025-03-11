@@ -1,0 +1,2 @@
+,time_stats.all_reduce.min,time_stats.all_reduce.max,time_stats.all_reduce.mean,time_stats.all_reduce.median,time_stats.all_reduce.std,rank,num_workers,size,collective,devices_per_node,max_devices_per_node
+0,8.0,48.0,34.333333333333336,47.0,18.624953392931992,0,2,2048,all_reduce,2,4

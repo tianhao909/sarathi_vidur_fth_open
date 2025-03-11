@@ -7,6 +7,7 @@ from vidur.config import (
     ReplicaConfig,
 )
 from vidur.entities import Batch, ExecutionTime
+import pdb
 
 
 class BaseExecutionTimePredictor(ABC):
@@ -30,6 +31,9 @@ class BaseExecutionTimePredictor(ABC):
         )
 
     def get_execution_time(self, batch: Batch, pipeline_stage: int) -> ExecutionTime:
+        # print(f">>fth predictor: get_execution_time /mnt/fth/software5/vidur/vidur/execution_time_predictor/base_execution_time_predictor.py")
+        # pdb.set_trace() # fth
+
         if pipeline_stage == self._replica_config.num_pipeline_stages - 1:
             pipeline_parallel_communication_time = 0
         else:

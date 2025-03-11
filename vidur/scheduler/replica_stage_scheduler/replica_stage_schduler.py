@@ -2,7 +2,7 @@ from typing import Tuple
 
 from vidur.entities import Batch, BatchStage, ExecutionTime
 from vidur.execution_time_predictor import BaseExecutionTimePredictor
-
+import pdb
 
 class ReplicaStageScheduler:
     def __init__(
@@ -12,6 +12,7 @@ class ReplicaStageScheduler:
         is_last_stage: bool,
         execution_time_predictor: BaseExecutionTimePredictor,
     ) -> None:
+        # pdb.set_trace() # fth
         self._replica_id = replica_id
         self._stage_id = stage_id
         self._is_last_stage = is_last_stage
@@ -28,17 +29,20 @@ class ReplicaStageScheduler:
         return len(self._batch_queue) == 0
 
     def add_batch(self, batch: Batch) -> None:
+        pdb.set_trace() # fth
         self._batch_queue.append(batch)
 
     def on_stage_end(self) -> None:
         self._is_busy = False
 
     def on_schedule(self) -> Tuple[Batch, BatchStage, ExecutionTime]:
+        pdb.set_trace() # fth
         if self._is_busy or not self._batch_queue:
             return None, None, None
 
         self._is_busy = True
         batch = self._batch_queue.pop(0)
+        print(f">>fth batch={batch} /mnt/fth/software5/vidur/vidur/scheduler/replica_stage_scheduler/replica_stage_schduler.py")
         execution_time = self._execution_time_predictor.get_execution_time(
             batch,
             self._stage_id,

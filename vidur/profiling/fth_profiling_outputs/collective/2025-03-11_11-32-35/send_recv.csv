@@ -1,0 +1,2 @@
+,time_stats.send_recv.min,time_stats.send_recv.max,time_stats.send_recv.mean,time_stats.send_recv.median,time_stats.send_recv.std,rank,num_workers,size,collective,devices_per_node,max_devices_per_node
+0,5.0,6.0,5.333333333333333,5.0,0.4714045207910317,0,2,2048,send_recv,2,4

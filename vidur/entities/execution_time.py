@@ -1,5 +1,5 @@
 from vidur.entities.base_entity import BaseEntity
-
+import pdb
 
 class ExecutionTime(BaseEntity):
     def __init__(
@@ -25,6 +25,7 @@ class ExecutionTime(BaseEntity):
         process_model_outputs_time: float,
         ray_comm_time: float,
     ) -> None:
+        # pdb.set_trace() # fth
         self._id = ExecutionTime.generate_id()
 
         self._num_layers_per_pipeline_stage = num_layers_per_pipeline_stage
@@ -180,6 +181,9 @@ class ExecutionTime(BaseEntity):
     @property
     def model_time(self) -> float:
         # we are not counting the execution time for the embedding layer and last softmax layer
+        print(f">>fth model_time /mnt/fth/software5/vidur/vidur/entities/execution_time.py")
+        # pdb.set_trace()
+        
         block_execution_time = self._get_block_execution_time()
         pipeline_stage_execution_time = (
             block_execution_time * self._num_layers_per_pipeline_stage

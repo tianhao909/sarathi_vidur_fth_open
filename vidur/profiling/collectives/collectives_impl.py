@@ -1,6 +1,7 @@
 from typing import Callable
 
 import torch
+import pdb # fth
 
 WARMUP_STEPS = 5
 GRAPH_STEPS = 3
@@ -42,6 +43,9 @@ class GraphedCollective:
             self._graph = self._build_graph()
 
     def _run_all_reduce(self):
+        
+        print(f">>fth 调用torch.distributed.all_reduce(self._buffer) /mnt/fth/software5/vidur/vidur/profiling/collectives/collectives_impl.py")
+        # pdb.set_trace() # fth
         torch.distributed.all_reduce(self._buffer)
 
     def _run_all_gather(self):
