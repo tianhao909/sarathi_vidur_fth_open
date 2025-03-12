@@ -520,6 +520,10 @@ class SklearnExecutionTimePredictor(BaseExecutionTimePredictor):
         if self._replica_config.tensor_parallel_size > 1:
             all_reduce_df = self._load_all_reduce_df(self._all_reduce_input_file)
             all_reduce_df = self._get_all_reduce_df_with_derived_features(all_reduce_df)
+            print(f"++fth all_reduce_df={all_reduce_df.head()}")
+            print(f"++fthShape: {all_reduce_df.shape}, Columns: {all_reduce_df.columns.tolist()}")
+            # print(all_reduce_df[['size', 'num_tokens']]) 
+            print(all_reduce_df[['size', 'num_tokens']].head(6)) # fth
 
             models["all_reduce"] = self._train_model(
                 model_name="all_reduce",
@@ -595,7 +599,7 @@ class SklearnExecutionTimePredictor(BaseExecutionTimePredictor):
         return models
 
     def _train_models(self) -> Dict[str, BaseEstimator]:
-        pdb.set_trace()
+        # pdb.set_trace()
         models = self._train_compute_models()
         models.update(self._train_cpu_overhead_models())
         models.update(self._train_attention_layer_models())

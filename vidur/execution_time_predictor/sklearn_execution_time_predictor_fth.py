@@ -211,8 +211,8 @@ class SklearnExecutionTimePredictor(BaseExecutionTimePredictor):  # 定义一个
         return df  # 返回数据帧
 
     def _get_compute_df_with_derived_features(self, df: pd.DataFrame) -> pd.DataFrame:  # 获取带有衍生特征的计算数据的方法
-        df_with_derived_features = df.copy()  # 复制数据帧
-        return df_with_derived_features  # 返回带有衍生特征的数据帧
+        df_with_derived_features = df.copy()  # 深拷贝 复制数据帧
+        return df_with_derived_features  # 返回深拷贝后的数据帧
 
     def _get_attention_df_with_derived_features(self, df: pd.DataFrame) -> pd.DataFrame:  # 获取带有衍生特征的注意力数据的方法
         df_with_derived_features = df.copy()  # 复制数据帧
