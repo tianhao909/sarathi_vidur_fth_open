@@ -181,7 +181,7 @@ class ExecutionTime(BaseEntity):
     @property
     def model_time(self) -> float:
         # we are not counting the execution time for the embedding layer and last softmax layer
-        print(f">>fth model_time /mnt/fth/software5/vidur/vidur/entities/execution_time.py")
+        # print(f">>fth model_time /mnt/fth/software5/vidur/vidur/entities/execution_time.py")
         # pdb.set_trace()
         
         block_execution_time = self._get_block_execution_time()

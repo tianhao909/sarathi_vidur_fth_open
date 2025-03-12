@@ -23,6 +23,7 @@ from vidur.execution_time_predictor.base_execution_time_predictor import (
     BaseExecutionTimePredictor,
 )
 from vidur.logger import init_logger
+import pdb
 
 logger = init_logger(__name__)
 
@@ -80,6 +81,12 @@ class SklearnExecutionTimePredictor(BaseExecutionTimePredictor):
             self._send_recv_input_file,
             self._cpu_overhead_input_file,
         ) = self._get_input_files()
+
+        print(f">>fth _compute_input_file: {self._compute_input_file} ")
+        print(f">>fth _attention_input_file: {self._attention_input_file} ")
+        print(f">>fth _send_recv_input_file: {self._all_reduce_input_file} ")
+        print(f">>fth _send_recv_input_file: {self._send_recv_input_file} ")
+        print(f">>fth _cpu_overhead_input_file: {self._cpu_overhead_input_file} ")
 
         self._models = self._train_models()
         self._predictions = self._predict_from_models()
@@ -286,7 +293,10 @@ class SklearnExecutionTimePredictor(BaseExecutionTimePredictor):
         else:
             df_hash_str = hashlib.md5(df.to_json().encode("utf-8")).hexdigest()
             combined_str = f"{config_str}_{model_name}_{df_hash_str}"
-
+        # print(f">>fth config_str={config_str} model_name={model_name} df_hash_str={df_hash_str} /mnt/fth/software5/vidur/vidur/execution_time_predictor/sklearn_execution_time_predictor.py ")
+        # print(f">>fth config_str={config_str}")
+        # print(f">>fth model_name={model_name}")
+        # print(f">>fth df_hash_str={df_hash_str}")
         return hashlib.md5(combined_str.encode("utf-8")).hexdigest()[0:8]
 
     def _load_model_from_cache(self, model_name: str, model_hash: str) -> BaseEstimator:
@@ -427,6 +437,11 @@ class SklearnExecutionTimePredictor(BaseExecutionTimePredictor):
         model_hash = self._get_model_hash(model, df=None)
 
         cached_predictions = self._load_model_predication_cache(model_name, model_hash)
+        # print(f">>fth cac hed_predictions={cached_predictions}")
+        # print(f">>fth cached_predictions={cached_predictions.keys()}")
+        # print(f">>fth cached_predictions={type(cached_predictions)}")
+        # print(f">>fth cached_predictions={len(cached_predictions)}")
+        # print(f">>fth first 5 keys in cached_predictions: {list(cached_predictions.keys())[:5]} ")
         if cached_predictions:
             return cached_predictions
 
@@ -512,6 +527,7 @@ class SklearnExecutionTimePredictor(BaseExecutionTimePredictor):
                 feature_cols=["num_tokens"],
                 target_col="time_stats.all_reduce.median",
             )
+            print(f">>fth models[all_reduce]={models['all_reduce']}/mnt/fth/software5/vidur/vidur/execution_time_predictor/sklearn_execution_time_predictor.py" )
 
         return models
 
@@ -579,6 +595,7 @@ class SklearnExecutionTimePredictor(BaseExecutionTimePredictor):
         return models
 
     def _train_models(self) -> Dict[str, BaseEstimator]:
+        pdb.set_trace()
         models = self._train_compute_models()
         models.update(self._train_cpu_overhead_models())
         models.update(self._train_attention_layer_models())
@@ -716,9 +733,18 @@ class SklearnExecutionTimePredictor(BaseExecutionTimePredictor):
         return predictions
 
     def _predict_from_models(self) -> Dict[str, Any]:
+        # print(f"--fth predictions0={predictions} /mnt/fth/software5/vidur/vidur/execution_time_predictor/sklearn_execution_time_predictor.py" )
         predictions = self._predict_for_compute_models()
+        # print(f"--fth predictions1={predictions} /mnt/fth/software5/vidur/vidur/execution_time_predictor/sklearn_execution_time_predictor.py" )
+        # print(f"--fth predictions1={dir(predictions)} /mnt/fth/software5/vidur/vidur/execution_time_predictor/sklearn_execution_time_predictor.py" )
+        # print(f"--fth predictions1={type(predictions)} /mnt/fth/software5/vidur/vidur/execution_time_predictor/sklearn_execution_time_predictor.py" )
+        print(f"--fth predictions1={predictions.keys()} " )
         predictions.update(self._predict_for_cpu_overhead_models())
+        print(f"--fth predictions2={predictions.keys()} " )
+        # print(f"--fth predictions2={predictions} /mnt/fth/software5/vidur/vidur/execution_time_predictor/sklearn_execution_time_predictor.py" )
         predictions.update(self._predict_for_attention_layer_models())
+        print(f"--fth predictions3={predictions.keys()} " )
+        # print(f"--fth predictions3={predictions} /mnt/fth/software5/vidur/vidur/execution_time_predictor/sklearn_execution_time_predictor.py" )
 
         return predictions
 
@@ -809,6 +835,10 @@ class SklearnExecutionTimePredictor(BaseExecutionTimePredictor):
         return self._predictions["add"][(batch._total_num_tokens_rounded,)]
 
     def _get_tensor_parallel_communication_time(self, batch: Batch) -> float:
+        # pdb.set_trace() # fth
+        print(f">> batch._total_num_tokens_rounded = {batch._total_num_tokens_rounded}")
+        print(f">> self._predictions['all_reduce'][(batch._total_num_tokens_rounded)] = {self._predictions['all_reduce'][(batch._total_num_tokens_rounded,)]}")
+        print(f"self._predictions['all_reduce'].key()={self._predictions['all_reduce'].key()}")
         return (
             self._predictions["all_reduce"][(batch._total_num_tokens_rounded,)]
             + self._config.nccl_cpu_launch_overhead_ms

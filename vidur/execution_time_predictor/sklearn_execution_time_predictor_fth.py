@@ -86,6 +86,11 @@ class SklearnExecutionTimePredictor(BaseExecutionTimePredictor):  # 定义一个
             self._cpu_overhead_input_file,
         ) = self._get_input_files()  # 获取输入文件路径
 
+        print(f">>fth _compute_input_file: {self._compute_input_file} ")
+        print(f">>fth _attention_input_file: {self._attention_input_file} ")
+        print(f">>fth _send_recv_input_file: {self._all_reduce_input_file} ")
+        print(f">>fth _send_recv_input_file: {self._send_recv_input_file} ")
+        print(f">>fth _cpu_overhead_input_file: {self._cpu_overhead_input_file} ")
         self._models = self._train_models()  # 训练模型
         self._predictions = self._predict_from_models()  # 从模型中进行预测
 
@@ -284,6 +289,7 @@ class SklearnExecutionTimePredictor(BaseExecutionTimePredictor):  # 定义一个
         pass
 
     def _get_model_hash(self, model_name: str, df: pd.DataFrame = None) -> str:  # 获取模型哈希的方法
+
         config_str = str(self.to_dict())  # 将模型配置转为字符串
 
         if df is None:
@@ -291,6 +297,7 @@ class SklearnExecutionTimePredictor(BaseExecutionTimePredictor):  # 定义一个
         else:
             df_hash_str = hashlib.md5(df.to_json().encode("utf-8")).hexdigest()  # 如果有数据帧，计算数据帧的哈希
             combined_str = f"{config_str}_{model_name}_{df_hash_str}"  # 组合字符串包含配置、模型名和数据帧哈希
+        # print(f">>fth config_str={config_str} model_name={model_name} df_hash_str={df_hash_str} /mnt/fth/software5/vidur/vidur/execution_time_predictor/sklearn_execution_time_predictor.py ")
 
         return hashlib.md5(combined_str.encode("utf-8")).hexdigest()[0:8]  # 返回组合字符串的哈希值前8位
 
@@ -412,7 +419,7 @@ class SklearnExecutionTimePredictor(BaseExecutionTimePredictor):  # 定义一个
     ) -> Dict[Tuple, float]:
         with InterProcessReaderWriterLock(
             f"{self._cache_dir}/{model_hash}_prediction_lock.file"
-        ).read_lock():
+        ).read_lock(): # 加读锁   read_lock() 表示以只读模式 加锁，允许多个进程 同时读取缓存文件，但阻止写操作。
             if self._config.no_cache:
                 return  # 如果配置中不允许缓存，直接返回
             cache_file = f"{self._cache_dir}/{model_name}_{model_hash}_predictions.pkl"
@@ -433,6 +440,7 @@ class SklearnExecutionTimePredictor(BaseExecutionTimePredictor):  # 定义一个
         model_hash = self._get_model_hash(model, df=None)  # 获取模型哈希值
 
         cached_predictions = self._load_model_predication_cache(model_name, model_hash)  # 从缓存加载预测结果
+        
         if cached_predictions:
             return cached_predictions  # 如果缓存中已有预测结果，直接返回
 
@@ -518,6 +526,8 @@ class SklearnExecutionTimePredictor(BaseExecutionTimePredictor):  # 定义一个
                 feature_cols=["num_tokens"],
                 target_col="time_stats.all_reduce.median",
             )  # 训练全归约模型并添加到字典中
+
+            # print(f"models[all_reduce]={models["all_reduce"]}/mnt/fth/software5/vidur/vidur/execution_time_predictor/sklearn_execution_time_predictor.py" )
 
         return models
 
