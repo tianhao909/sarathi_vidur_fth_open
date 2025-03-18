@@ -8,6 +8,7 @@ import pandas as pd  # 导入pandas库，并简写为pd，用于数据处理
 import ray  # 导入ray库，用于并行和分布式处理
 import yaml  # 导入yaml库，用于读取和写入YAML文件
 from tqdm import tqdm  # 从tqdm库导入tqdm，用于显示进度条
+import pdb
 
 # 导入自定义模块中的类和函数
 from vidur.profiling.common.model_config import ModelConfig  # 从common.model_config模块中导入ModelConfig类
@@ -399,6 +400,7 @@ def main():  # 定义main函数，程序的主入口
 
     ### fth att基础 加mlp
     dtype = torch.float16  # 设置数据类型为 float16
+    pdb.set_trace() # fth
     input_combinations = get_attention_input_combinations(
         args.max_seq_len,
         args.min_batch_size,

@@ -111,6 +111,7 @@ def get_attention_input_combinations(
     # Full prefills
     prefill_lengths_to_profile = get_seq_lengths_to_profile(max_seq_len)
     input_combinations.extend(product(prefill_lengths_to_profile, [0], [1], [True]))
+    # print("+++fth input_combinations = {input_combinations}")
     # Decodes
     kv_cache_sizes_to_profile = get_seq_lengths_to_profile(max_seq_len)
     batch_sizes_to_profile = get_attention_batch_sizes_to_profile(
