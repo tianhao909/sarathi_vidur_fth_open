@@ -395,6 +395,8 @@ def main():  # 定义main函数，程序的主入口
 
     num_tokens_to_profile = get_num_tokens_to_profile(args.max_tokens)  #  fth mlp 获取分析的token数量
 
+    # print(f"fth num_tokens_to_profile = {num_tokens_to_profile}")
+
     ### fth att基础 加mlp
     dtype = torch.float16  # 设置数据类型为 float16
     input_combinations = get_attention_input_combinations(
@@ -404,6 +406,7 @@ def main():  # 定义main函数，程序的主入口
         args.profile_only_prefill,
         args.profile_only_decode,
     )  # 获取所有注意力输入组合
+    print(f"fth input_combinations: {input_combinations}")
 
 
     total_combos = {}  # 初始化 total_combos 字典，用于存储每个模型和并行工作者数量的输入组合
@@ -420,6 +423,7 @@ def main():  # 定义main函数，程序的主入口
                 args.block_size,
                 dtype,
             )  # 计算最大块数
+            print(f"fth {max_num_blocks}")
             max_num_blocks_dict[(model, num_tensor_parallel_workers)] = max_num_blocks  # 存储最大块数
             total_combos[(model, num_tensor_parallel_workers)] = list(
                 filter(
