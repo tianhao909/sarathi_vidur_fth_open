@@ -99,6 +99,7 @@ def get_attention_input_combinations(
     prefill_chunk_sizes_to_profile = get_attention_prefill_chunk_sizes_to_profile(
         max_seq_len
     )
+    print(f"--fth  prefill_chunk_sizes_to_profile={prefill_chunk_sizes_to_profile}  max_seq_len={max_seq_len}")
     for prefill_chunk_size in prefill_chunk_sizes_to_profile:
         num_partitions = max_seq_len // prefill_chunk_size
         kv_cache_sizes_to_profile = [
@@ -108,6 +109,7 @@ def get_attention_input_combinations(
         input_combinations.extend(
             product([prefill_chunk_size], kv_cache_sizes_to_profile, [1], [True])
         )
+    print(f"--fth input_combinations1{input_combinations } /mnt/fth/software5/vidur/vidur/profiling/utils/__init__.py")
     # Full prefills
     prefill_lengths_to_profile = get_seq_lengths_to_profile(max_seq_len)
     input_combinations.extend(product(prefill_lengths_to_profile, [0], [1], [True]))
@@ -117,9 +119,11 @@ def get_attention_input_combinations(
     batch_sizes_to_profile = get_attention_batch_sizes_to_profile(
         min_batch_size, max_batch_size
     )
+    print(f"--fth kv_cache_sizes_to_profile={kv_cache_sizes_to_profile} batch_sizes_to_profile={batch_sizes_to_profile} min_batch_size={min_batch_size} max_batch_size={max_batch_size}")
     input_combinations.extend(
         product([0], kv_cache_sizes_to_profile, batch_sizes_to_profile, [False])
     )
+    print(f"--fth input_combinations1{input_combinations } /mnt/fth/software5/vidur/vidur/profiling/utils/__init__.py")
 
     valid_input_combinations = []
     for input_combination in input_combinations:
